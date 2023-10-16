@@ -1,23 +1,18 @@
 package com.phenriquep00.movietracker.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.phenriquep00.movietracker.model.MovieModel;
 import com.phenriquep00.movietracker.repository.IMovieRepository;
+import com.phenriquep00.movietracker.utils.MovieApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/movie")
@@ -38,7 +33,9 @@ public class MovieController
             // Step 2 -> Retrieve movie data by given imdb_id
             HttpResponse<String> results =  this.getMovieData(imdbId);
 
-            // Step 3 -> Save movie data in the database
+            // TODO: Step 3 -> Save movie data in the database
+            assert results != null;
+            this.saveMovieFromJson(results.getBody());
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(results.getBody());
         }
@@ -103,4 +100,19 @@ public class MovieController
 
         return null;
     }
+
+    public void saveMovieFromJson(String json) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            MovieApiResponse movieApiResponse = objectMapper.readValue(json, MovieApiResponse.class);
+
+            MovieModel movieData = movieApiResponse.getResults();
+
+            // Assuming you have a repository for MovieModel, save the movie to the database
+            movieRepository.save(movieData);
+        } catch (Exception e) {
+            e.printStackTrace(); // Handle any exceptions (e.g., JSON parsing errors)
+        }
+    }
+
 }
