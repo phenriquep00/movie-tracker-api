@@ -24,23 +24,42 @@ public class MovieController
     @PostMapping("/{movieTitle}")
     public ResponseEntity create(@PathVariable String movieTitle) {
 
-        if (this.movieRepository.findByTitle(movieTitle) == null) {
+
+        MovieModel movieModel = this.movieRepository.findByTitle(movieTitle);
+
+        // if the movie is not in the db: register it
+        if (movieModel == null) {
             System.out.println("Movie not registered, proceed to request for it on MoviesMiniDatabase API");
 
             // Step 1 -> Retrieve imdb_id by given movie title
             String imdbId = this.getImdbId(movieTitle);
 
+            if(imdbId == null)
+            {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
+            }
+
             // Step 2 -> Retrieve movie data by given imdb_id
             HttpResponse<String> results =  this.getMovieData(imdbId);
 
-            // TODO: Step 3 -> Save movie data in the database
-            assert results != null;
-            this.saveMovieFromJson(results.getBody());
+            if(results == null)
+            {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie data could not be retrieved");
+            }
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(results.getBody());
+            // TODO: Step 3 -> Save movie data in the database
+            MovieModel NewMovie = this.saveMovieFromJson(results.getBody());
+
+            if(NewMovie == null)
+            {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Movie wasn't saved in the database");
+            }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(NewMovie);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Movie registered successfully");
+        // if the movie is already in the db: return it
+        return ResponseEntity.status(HttpStatus.CREATED).body(movieModel);
     }
 
     private String getImdbId(String movieTitle)
@@ -49,8 +68,6 @@ public class MovieController
 
             String urlGetByTitle = "https://moviesminidatabase.p.rapidapi.com/movie/imdb_id/byTitle/" + movieTitle;
 
-            System.out.println(urlGetByTitle);
-
             HttpResponse<String> response = Unirest
                     .get(urlGetByTitle)
                     .header("X-RapidAPI-Key", "e86aa47846msh08cfcd98266767ep14765ajsn3734f94f6bab")
@@ -58,11 +75,15 @@ public class MovieController
                     .header("Content-Type", "application/json")
                     .asString();
 
+            if(response == null)
+            {
+                return null;
+            }
+
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
 
             String imdbId = jsonNode.get("results").get(0).get("imdb_id").asText();
-            System.out.println("imdb_id: " + imdbId);
 
             return imdbId;
 
@@ -84,14 +105,12 @@ public class MovieController
 
             System.out.println(urlGetByImdbId);
 
-            HttpResponse<String> response = Unirest
+            return Unirest
                     .get(urlGetByImdbId)
                     .header("X-RapidAPI-Key", "e86aa47846msh08cfcd98266767ep14765ajsn3734f94f6bab")
                     .header("X-RapidAPI-Host", "moviesminidatabase.p.rapidapi.com")
                     .header("Content-Type", "application/json")
                     .asString();
-
-            return response;
         }
         catch (UnirestException e)
         {
@@ -101,7 +120,7 @@ public class MovieController
         return null;
     }
 
-    public void saveMovieFromJson(String json) {
+    public MovieModel saveMovieFromJson(String json) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             MovieApiResponse movieApiResponse = objectMapper.readValue(json, MovieApiResponse.class);
@@ -110,9 +129,13 @@ public class MovieController
 
             // Assuming you have a repository for MovieModel, save the movie to the database
             movieRepository.save(movieData);
+
+            return movieData;
+
         } catch (Exception e) {
             e.printStackTrace(); // Handle any exceptions (e.g., JSON parsing errors)
         }
+        return null;
     }
 
 }
