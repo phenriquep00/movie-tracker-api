@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.core.env.Environment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping("/movie")
 public class MovieController
 {
+    private Environment environment;
+
     @Autowired
     private IMovieRepository movieRepository;
 
@@ -70,8 +73,8 @@ public class MovieController
 
             HttpResponse<String> response = Unirest
                     .get(urlGetByTitle)
-                    .header("X-RapidAPI-Key", "e86aa47846msh08cfcd98266767ep14765ajsn3734f94f6bab")
-                    .header("X-RapidAPI-Host", "moviesminidatabase.p.rapidapi.com")
+                    .header("X-RapidAPI-Key", environment.getProperty("MOVIES_API_KEY"))
+                    .header("X-RapidAPI-Host", environment.getProperty("MOVIES_API_HOST"))
                     .header("Content-Type", "application/json")
                     .asString();
 
