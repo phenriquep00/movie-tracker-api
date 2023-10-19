@@ -4,6 +4,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .env
+application.properties
 
 ### STS ###
 .apt_generated
@@ -32,3 +33,4 @@ build/
 
 ### VS Code ###
 .vscode/
+/bin/

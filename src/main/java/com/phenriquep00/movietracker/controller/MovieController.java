@@ -8,6 +8,7 @@ import com.phenriquep00.movietracker.model.MovieModel;
 import com.phenriquep00.movietracker.repository.IMovieRepository;
 import com.phenriquep00.movietracker.utils.MovieApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +18,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/movie")
-public class MovieController
-{
-    private Environment environment;
-
+public class MovieController {
+    @Value("${spring.application.x_rapid_api_key}")
+    private String apiKey;
+    @Value("${spring.application.x_rapid_api_host}")
+    private String apiHost;
     @Autowired
     private IMovieRepository movieRepository;
 
     @PostMapping("/{movieTitle}")
     public ResponseEntity create(@PathVariable String movieTitle) {
-
 
         MovieModel movieModel = this.movieRepository.findByTitle(movieTitle);
 
@@ -37,24 +38,21 @@ public class MovieController
             // Step 1 -> Retrieve imdb_id by given movie title
             String imdbId = this.getImdbId(movieTitle);
 
-            if(imdbId == null)
-            {
+            if (imdbId == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
             }
 
             // Step 2 -> Retrieve movie data by given imdb_id
-            HttpResponse<String> results =  this.getMovieData(imdbId);
+            HttpResponse<String> results = this.getMovieData(imdbId);
 
-            if(results == null)
-            {
+            if (results == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie data could not be retrieved");
             }
 
             // TODO: Step 3 -> Save movie data in the database
             MovieModel NewMovie = this.saveMovieFromJson(results.getBody());
 
-            if(NewMovie == null)
-            {
+            if (NewMovie == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Movie wasn't saved in the database");
             }
 
@@ -65,21 +63,19 @@ public class MovieController
         return ResponseEntity.status(HttpStatus.CREATED).body(movieModel);
     }
 
-    private String getImdbId(String movieTitle)
-    {
+    private String getImdbId(String movieTitle) {
         try {
 
             String urlGetByTitle = "https://moviesminidatabase.p.rapidapi.com/movie/imdb_id/byTitle/" + movieTitle;
 
             HttpResponse<String> response = Unirest
                     .get(urlGetByTitle)
-                    .header("X-RapidAPI-Key", environment.getProperty("MOVIES_API_KEY"))
-                    .header("X-RapidAPI-Host", environment.getProperty("MOVIES_API_HOST"))
+                    .header("X-RapidAPI-Key", apiKey)
+                    .header("X-RapidAPI-Host", apiHost)
                     .header("Content-Type", "application/json")
                     .asString();
 
-            if(response == null)
-            {
+            if (response == null) {
                 return null;
             }
 
@@ -92,8 +88,7 @@ public class MovieController
 
         } catch (UnirestException e) {
             e.printStackTrace();
-        } catch (JsonProcessingException e)
-        {
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
 
@@ -102,21 +97,18 @@ public class MovieController
     }
 
     private HttpResponse<String> getMovieData(String imdbId) {
-        try
-        {
+        try {
             String urlGetByImdbId = "https://moviesminidatabase.p.rapidapi.com/movie/id/" + imdbId + "/";
 
             System.out.println(urlGetByImdbId);
 
             return Unirest
                     .get(urlGetByImdbId)
-                    .header("X-RapidAPI-Key", "e86aa47846msh08cfcd98266767ep14765ajsn3734f94f6bab")
-                    .header("X-RapidAPI-Host", "moviesminidatabase.p.rapidapi.com")
+                    .header("X-RapidAPI-Key", apiKey)
+                    .header("X-RapidAPI-Host", apiHost)
                     .header("Content-Type", "application/json")
                     .asString();
-        }
-        catch (UnirestException e)
-        {
+        } catch (UnirestException e) {
             e.printStackTrace();
         }
 
