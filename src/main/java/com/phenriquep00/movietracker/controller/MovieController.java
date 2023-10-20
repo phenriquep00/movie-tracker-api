@@ -32,27 +32,30 @@ public class MovieController {
         MovieModel movieModel = this.movieRepository.findByTitle(movieTitle);
 
         // if the movie is not in the db: register it
-        if (movieModel == null) {
+        if (movieModel == null) 
+        {
             System.out.println("Movie not registered, proceed to request for it on MoviesMiniDatabase API");
 
             // Step 1 -> Retrieve imdb_id by given movie title
             String imdbId = this.getImdbId(movieTitle);
 
-            if (imdbId == null) {
+            if (imdbId == null) 
+            {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie not found");
             }
 
             // Step 2 -> Retrieve movie data by given imdb_id
             HttpResponse<String> results = this.getMovieData(imdbId);
 
-            if (results == null) {
+            if (results == null) 
+            {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Movie data could not be retrieved");
             }
 
-            // TODO: Step 3 -> Save movie data in the database
             MovieModel NewMovie = this.saveMovieFromJson(results.getBody());
 
-            if (NewMovie == null) {
+            if (NewMovie == null) 
+            {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Movie wasn't saved in the database");
             }
 
@@ -63,8 +66,10 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(movieModel);
     }
 
-    private String getImdbId(String movieTitle) {
-        try {
+    private String getImdbId(String movieTitle) 
+    {
+        try 
+        {
 
             String urlGetByTitle = "https://moviesminidatabase.p.rapidapi.com/movie/imdb_id/byTitle/" + movieTitle;
 
@@ -75,7 +80,8 @@ public class MovieController {
                     .header("Content-Type", "application/json")
                     .asString();
 
-            if (response == null) {
+            if (response == null) 
+            {
                 return null;
             }
 
@@ -86,9 +92,13 @@ public class MovieController {
 
             return imdbId;
 
-        } catch (UnirestException e) {
+        } 
+        catch (UnirestException e) 
+        {
             e.printStackTrace();
-        } catch (JsonProcessingException e) {
+        } 
+        catch (JsonProcessingException e) 
+        {
             throw new RuntimeException(e);
         }
 
@@ -97,7 +107,8 @@ public class MovieController {
     }
 
     private HttpResponse<String> getMovieData(String imdbId) {
-        try {
+        try
+        {
             String urlGetByImdbId = "https://moviesminidatabase.p.rapidapi.com/movie/id/" + imdbId + "/";
 
             System.out.println(urlGetByImdbId);
@@ -108,15 +119,19 @@ public class MovieController {
                     .header("X-RapidAPI-Host", apiHost)
                     .header("Content-Type", "application/json")
                     .asString();
-        } catch (UnirestException e) {
+        } 
+        catch (UnirestException e) 
+        {
             e.printStackTrace();
         }
 
         return null;
     }
 
-    public MovieModel saveMovieFromJson(String json) {
-        try {
+    public MovieModel saveMovieFromJson(String json) 
+    {
+        try 
+        {
             ObjectMapper objectMapper = new ObjectMapper();
             MovieApiResponse movieApiResponse = objectMapper.readValue(json, MovieApiResponse.class);
 
@@ -127,7 +142,9 @@ public class MovieController {
 
             return movieData;
 
-        } catch (Exception e) {
+        } 
+        catch (Exception e) 
+        {
             e.printStackTrace(); // Handle any exceptions (e.g., JSON parsing errors)
         }
         return null;
