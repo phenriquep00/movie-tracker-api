@@ -1,7 +1,6 @@
 package com.phenriquep00.movietracker.utils;
 
 import com.phenriquep00.movietracker.model.MovieModel;
-import lombok.Data;
 
 public class MovieApiResponse 
 {
