@@ -1,0 +1,2 @@
+Change archltecture from controller/model/repository outer folders to entity based (movie, user and userMovie) based outer folders
+add validation to the 
