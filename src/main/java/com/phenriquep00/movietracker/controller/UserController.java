@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/user")
 public class UserController 
 {
@@ -41,4 +43,23 @@ public class UserController
 
         return ResponseEntity.status(HttpStatus.OK).body(userModel);
     }
+
+    @GetMapping("/auth/{username}")
+    public ResponseEntity<Object> authenticate(@PathVariable String username, @RequestParam String password) {
+        UserModel userModel = this.userRepository.findByUsername(username);
+
+        if (userModel == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        // Verify the provided password against the stored hashed password
+        if (BCrypt.verifyer().verify(password.toCharArray(), userModel.getPassword()).verified) {
+            // Password is correct
+            return ResponseEntity.status(HttpStatus.OK).body("User found");
+        } else {
+            // Password is incorrect
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect password");
+        }
+    }
+
 }

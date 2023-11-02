@@ -5,7 +5,6 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.phenriquep00.movietracker.model.MovieModel;
-import com.phenriquep00.movietracker.model.UserModel;
 import com.phenriquep00.movietracker.model.UserMovieModel;
 import com.phenriquep00.movietracker.repository.IMovieRepository;
 import com.phenriquep00.movietracker.repository.IUserMovieRepository;
@@ -40,13 +39,10 @@ public class MovieController
     private IUserMovieRepository userMovieRepository;
 
     @PostMapping("/{movieTitle}")
-    public ResponseEntity create(@PathVariable String movieTitle, HttpServletRequest request) 
+    public ResponseEntity create(@PathVariable String movieTitle, HttpServletRequest request)
     {
-
-
         MovieModel movieModel = this.movieRepository.findByTitle(movieTitle);
         UserMovieModel userMovieModel = new UserMovieModel();
-
 
         // if the movie is not in the db: register it
         if (movieModel == null) 
